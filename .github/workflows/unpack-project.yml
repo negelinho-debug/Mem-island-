@@ -1,0 +1,30 @@
+
+name: MEM ISLAND - Unpack Project
+
+on:
+  push:
+    paths:
+      - '.github/workflows/unpack-project.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract Unity project
+        run: |
+          unzip -q MEM_ISLAND_Unity_Forest_Update.zip
+          cp -a MEM_ISLAND_Unity/. .
+          test -f Assets/Scripts/MemIslandGame.cs
+
+      - name: Save project files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Assets Packages ProjectSettings README.md .gitignore .github/workflows/unity-webgl.yml
+          git diff --cached --quiet || (git commit -m "Import Unity project" && git push)
