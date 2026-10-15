@@ -1,40 +1,106 @@
+
 #if UNITY_EDITOR
 using System.IO;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using UnityEngine.SceneManagement;
 
 public static class MemIslandEditor
 {
-    // One-click new scene creation, safe in Unity batch mode.
+    // Bundle ID from Signulous
+    public const string IOSBundleID = "app.chili6614.lake1071";
+
+    public static void ConfigureIOS()
+    {
+        PlayerSettings.productName = "MEM ISLAND";
+        PlayerSettings.companyName = "Negelinho";
+        PlayerSettings.SetApplicationIdentifier(
+            NamedBuildTarget.iOS,
+            IOSBundleID
+        );
+        PlayerSettings.defaultInterfaceOrientation =
+            UIOrientation.LandscapeLeft;
+    }
+
     [MenuItem("MEM ISLAND/Создать игровую сцену")]
     public static void CreateScene()
     {
-        if(!Directory.Exists("Assets/Scenes"))Directory.CreateDirectory("Assets/Scenes");
-        var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
-        GameObject starter=new GameObject("MEM ISLAND — GAME BOOTSTRAP");
+        if (!Directory.Exists("Assets/Scenes"))
+            Directory.CreateDirectory("Assets/Scenes");
+
+        var scene = EditorSceneManager.NewScene(
+            NewSceneSetup.EmptyScene,
+            NewSceneMode.Single
+        );
+
+        GameObject starter = new GameObject(
+            "MEM ISLAND — GAME BOOTSTRAP"
+        );
         starter.AddComponent<MemIslandGame>();
+
         EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene,"Assets/Scenes/MemIsland.unity");
-        EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene("Assets/Scenes/MemIsland.unity",true)};
-        PlayerSettings.productName="MEM ISLAND";
-        PlayerSettings.companyName="Negelinho";
-        PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS,"com.negelinho.memisland");
-        PlayerSettings.defaultInterfaceOrientation=UIOrientation.LandscapeLeft;
+        EditorSceneManager.SaveScene(
+            scene,
+            "Assets/Scenes/MemIsland.unity"
+        );
+
+        EditorBuildSettings.scenes = new[] {
+            new EditorBuildSettingsScene(
+                "Assets/Scenes/MemIsland.unity", true
+            )
+        };
+
+        ConfigureIOS();
         AssetDatabase.SaveAssets();
-        Debug.Log("MEM ISLAND: scene generated. Open Assets/Scenes/MemIsland.unity and Play!");
     }
+
     public static void BuildWebGL()
     {
         CreateScene();
-        BuildPipeline.BuildPlayer(new[]{"Assets/Scenes/MemIsland.unity"},"Build/WebGL",BuildTarget.WebGL,BuildOptions.None);
+        BuildPipeline.BuildPlayer(
+            new[] { "Assets/Scenes/MemIsland.unity" },
+            "Build/WebGL",
+            BuildTarget.WebGL,
+            BuildOptions.None
+        );
     }
+
     public static void BuildIOS()
     {
         CreateScene();
-        PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.iOS,ScriptingImplementation.IL2CPP);
-        BuildPipeline.BuildPlayer(new[]{"Assets/Scenes/MemIsland.unity"},"Build/iOS",BuildTarget.iOS,BuildOptions.None);
+
+        PlayerSettings.SetScriptingBackend(
+            NamedBuildTarget.iOS,
+            ScriptingImplementation.IL2CPP
+        );
+
+        BuildPipeline.BuildPlayer(
+            new[] { "Assets/Scenes/MemIsland.unity" },
+            "Build/iOS",
+            BuildTarget.iOS,
+            BuildOptions.None
+        );
+    }
+}
+
+public sealed class MemIslandIOSPreBuild :
+    IPreprocessBuildWithReport
+{
+    public int callbackOrder { get { return -1000; } }
+
+    public void OnPreprocessBuild(BuildReport report)
+    {
+        if (report.summary.platform == BuildTarget.iOS)
+        {
+            MemIslandEditor.ConfigureIOS();
+            Debug.Log(
+                "MEM ISLAND iOS Bundle ID: " +
+                MemIslandEditor.IOSBundleID
+            );
+        }
     }
 }
 #endif
