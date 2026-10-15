@@ -13,18 +13,28 @@ permissions:
 jobs:
   unpack:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Extract Unity project
         run: |
-          unzip -q MEM_ISLAND_Unity_Forest_Update.zip
+          unzip -q -o MEM_ISLAND_Unity_Forest_Update.zip
           cp -a MEM_ISLAND_Unity/. .
+
           test -f Assets/Scripts/MemIslandGame.cs
+          test -f Assets/Scenes/MemIsland.unity
+          test -f ProjectSettings/ProjectVersion.txt
 
       - name: Save project files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Assets Packages ProjectSettings README.md .gitignore .github/workflows/unity-webgl.yml
-          git diff --cached --quiet || (git commit -m "Import Unity project" && git push)
+
+          git add Assets Packages ProjectSettings README.md .gitignore
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Import MEM ISLAND Unity project"
+            git push
+          fi
